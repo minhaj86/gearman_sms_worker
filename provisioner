@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+export DEBIAN_FRONTEND=noninteractive
+
+installpkg(){
+    dpkg-query --status $1 >/dev/null || apt-get install -y $1
+}
+
+apt-get update
+installpkg php5
+installpkg php5-mysql
+installpkg php5-curl
+installpkg redis-server
+installpkg mysql-server
+installpkg apache2-utils
+installpkg apache2-suexec-custom
+installpkg gearman
+installpkg gearman-tools
+installpkg php5-gearman
+
+echo "ServerName localhost" > /etc/apache2/conf-enabled/servername.conf
+a2enmod suexec
+a2enmod rewrite
+a2dissite 000-default.conf
+cp /tmp/001-talented.conf /etc/apache2/sites-available
+a2ensite  001-talented.conf
+#cp /tmp/25-gearman.ini /etc/php5/cli/conf.d/
+#cp /tmp/25-gearman.ini /etc/php5/apache2/conf.d/
+mkdir -p /home/vagrant/logs && chmod 0777 -R /home/vagrant/logs
+service apache2 restart
+
+cp /tmp/workermanager.conf /etc/init/workermanager.conf
+
+bootstrapdb(){
+    cat <<EOF | mysql -uroot
+    DROP DATABASE IF EXISTS samtt;
+    CREATE DATABASE samtt;
+    USE samtt;
+    CREATE TABLE mo (
+      id int NOT NULL auto_increment,
+      msisdn varchar(20),
+      operatorid int,
+      shortcodeid int,
+      text varchar(255),
+      auth_token varchar(60),
+      created_at DATETIME,
+      PRIMARY KEY(id)
+    ) ;
+    alter table mo add index index1 (created_at);
+EOF
+}
+bootstrapdb
+
+populate_db() {
+    /tmp/populate_db 10000000| mysql -u root samtt
+}
+# populate_db
+
+run_workers() {
+  service workermanager start
+}
+
+run_workers
+

@@ -1,0 +1,3 @@
+#!/bin/bash
+cd /home/vagrant/code/daemon
+./bin/pecl_manager.php  -c ./etc/config.ini -vvv

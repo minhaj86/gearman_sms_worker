@@ -1,0 +1,7 @@
+tail -f code/log/workermanager.log
+
+watch -n0 "(echo status ; sleep 0.1) | netcat localhost 4730"
+
+watch -n0 "echo 'select count(*) from mo;' | mysql -u root samtt"
+
+ab -n 1000 -c 10 "http://localhost/index.php?msisdn=60123456789&operatorid=3&shortcodeid=8&text=ON+GAMES"
